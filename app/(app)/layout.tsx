@@ -1,5 +1,6 @@
 import SidebarNav from "@/components/SidebarNav";
 import AppShell from "@/components/AppShell";
+import BottomNav from "@/components/BottomNav";
 
 export default function AppLayout({
   children,
@@ -15,10 +16,13 @@ export default function AppLayout({
             className="flex-1 overflow-auto"
             style={{ backgroundColor: "var(--color-surface)" }}
           >
-            <div className="max-w-5xl mx-auto px-8 py-10">{children}</div>
+            <div className="max-w-5xl mx-auto px-4 py-6 md:px-8 md:py-10 pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-10">
+              {children}
+            </div>
           </main>
         </AppShell>
       </div>
+      <BottomNav />
     </div>
   );
 }

@@ -59,7 +59,7 @@ export default function BreakDetailView({
           Favorite breaks
         </Link>
         <h1
-          className="text-3xl font-semibold tracking-tight"
+          className="text-2xl md:text-3xl font-semibold tracking-tight"
           style={{ color: "var(--color-text)" }}
         >
           {breakData.name}
@@ -68,7 +68,7 @@ export default function BreakDetailView({
 
       {/* Metadata */}
       <div
-        className="inline-flex items-center gap-4 rounded-lg border px-4 py-2.5 mb-8 text-[13px]"
+        className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 rounded-lg border px-4 py-2.5 mb-8 text-[13px]"
         style={{
           backgroundColor: "var(--color-bg)",
           borderColor: "var(--color-border)",
@@ -82,7 +82,7 @@ export default function BreakDetailView({
           reports in the last 24 hrs
         </span>
         <span
-          className="w-px h-4 shrink-0"
+          className="hidden sm:block w-px h-4 shrink-0"
           style={{ backgroundColor: "var(--color-border)" }}
           aria-hidden
         />
@@ -95,7 +95,7 @@ export default function BreakDetailView({
       </div>
 
       {/* Headline facts — each derived from vote history */}
-      <div className="grid grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
         {CONDITION_FIELDS.map((field) => {
           const value = summary.conditions[field.key];
           const isSuggestion = field.key === "suggestion";
@@ -141,7 +141,7 @@ export default function BreakDetailView({
       >
         {/* Chart header */}
         <div
-          className="flex items-center justify-between px-4 py-3 border-b"
+          className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-b"
           style={{ borderColor: "var(--color-border)" }}
         >
           <span

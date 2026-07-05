@@ -3,7 +3,7 @@ export default function FindBreaksPage() {
     <div>
       <div className="mb-8">
         <h1
-          className="text-3xl font-semibold tracking-tight"
+          className="text-2xl md:text-3xl font-semibold tracking-tight"
           style={{ color: "var(--color-text)" }}
         >
           Find breaks

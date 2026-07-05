@@ -49,8 +49,9 @@ export default function FavoriteBreaksTable() {
           </div>
         )}
 
+        {/* Desktop table */}
         <div
-          className="overflow-hidden rounded-lg border"
+          className="hidden md:block overflow-hidden rounded-lg border"
           style={{
             backgroundColor: "var(--color-bg)",
             borderColor: "var(--color-border)",
@@ -222,6 +223,117 @@ export default function FavoriteBreaksTable() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Mobile card list */}
+        <div className="md:hidden">
+          {breaks.length === 0 ? (
+            <p
+              className="py-12 text-center text-sm"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              No favorite breaks yet. Save a break to start tracking reports.
+            </p>
+          ) : (
+            <div
+              className="rounded-lg border overflow-hidden"
+              style={{
+                backgroundColor: "var(--color-bg)",
+                borderColor: "var(--color-border)",
+                boxShadow: "var(--shadow-sm)",
+              }}
+            >
+              {breaks.map((item, index) => {
+                const summary = getBreakSummary(item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className="px-4 py-3.5"
+                    style={{
+                      borderBottom:
+                        index < breaks.length - 1
+                          ? "1px solid var(--color-border)"
+                          : undefined,
+                    }}
+                  >
+                    {/* Name + details link */}
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <span
+                        className="text-[14px] font-medium leading-snug"
+                        style={{ color: "var(--color-text)" }}
+                      >
+                        {item.name}
+                      </span>
+                      {conditionsVisible && (
+                        <Link
+                          href={`/favorite-breaks/${item.id}`}
+                          className="shrink-0 rounded border px-2.5 py-1 text-[12px] font-medium transition-colors"
+                          style={{
+                            borderColor: "var(--color-border)",
+                            color: "var(--color-text-muted)",
+                            backgroundColor: "var(--color-bg)",
+                          }}
+                        >
+                          Details
+                        </Link>
+                      )}
+                    </div>
+
+                    {/* Stats row */}
+                    <div className="flex items-center gap-3 mb-2">
+                      <span
+                        className="text-[12px] tabular-nums"
+                        style={{ color: "var(--color-text-muted)" }}
+                      >
+                        {summary.reportFrequency} reports today
+                      </span>
+                      <span
+                        className="w-px h-3 shrink-0"
+                        style={{ backgroundColor: "var(--color-border)" }}
+                        aria-hidden
+                      />
+                      <span
+                        className="text-[12px] tabular-nums"
+                        style={{ color: "var(--color-text-muted)" }}
+                      >
+                        Latest: {summary.latestReport}
+                      </span>
+                    </div>
+
+                    {/* Conditions grid */}
+                    {conditionsVisible && (
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2.5">
+                        {CONDITION_FIELDS.map((field) => {
+                          const value = summary.conditions[field.key];
+                          const isSuggestion = field.key === "suggestion";
+                          return (
+                            <div key={field.key} className="flex flex-col gap-0.5">
+                              <span
+                                className="text-[10px] font-medium tracking-wide uppercase"
+                                style={{ color: "var(--color-text-muted)" }}
+                              >
+                                {field.label}
+                              </span>
+                              <span
+                                className={`text-[13px]${isSuggestion ? " font-medium" : ""}`}
+                                style={{
+                                  color: isSuggestion
+                                    ? getSuggestionColor(summary.conditions.suggestion)
+                                    : "var(--color-text)",
+                                }}
+                              >
+                                {value}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
