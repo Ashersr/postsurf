@@ -1,4 +1,9 @@
-import { CONDITION_FIELDS, type ConditionKey, type Conditions } from "./conditions";
+import {
+  CONDITION_FIELDS,
+  DEFAULT_CONDITIONS,
+  type ConditionKey,
+  type Conditions,
+} from "./conditions";
 
 export type TimeHorizon = "today" | "1w" | "1m" | "all";
 
@@ -59,49 +64,55 @@ function randomInt(rng: () => number, min: number, max: number): number {
   return min + Math.floor(rng() * (max - min + 1));
 }
 
-function buildTimeSlots(rng: () => number): number[] {
-  const slots: number[] = [];
+function getStartOfLocalDay(timestamp: number): number {
+  const d = new Date(timestamp);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
 
-  // Today — roughly every 2–3 hours across the last 24 h.
-  for (let h = 1; h <= 22; ) {
-    slots.push(REF - h * 60 * 60 * 1000);
-    h += randomInt(rng, 2, 3);
+function buildTimeSlots(rng: () => number): number[] {
+  const slots = new Set<number>();
+
+  // Today — every hour of the calendar day so each chart has a full 24 h axis.
+  const dayStart = getStartOfLocalDay(REF);
+  for (let h = 0; h < 24; h++) {
+    slots.add(dayStart + h * 60 * 60 * 1000);
   }
 
   // Past 29 days — 1–2 report windows per day.
-  for (let d = 2; d <= 29; d++) {
+  for (let d = 1; d <= 29; d++) {
     const windows = randomInt(rng, 1, 2);
     for (let w = 0; w < windows; w++) {
       const hour = randomInt(rng, 7, 16);
-      slots.push(REF - d * 24 * 60 * 60 * 1000 + hour * 60 * 60 * 1000);
+      slots.add(REF - d * 24 * 60 * 60 * 1000 + hour * 60 * 60 * 1000);
     }
   }
 
-  return slots.sort((a, b) => a - b);
-}
-
-function randomConditions(rng: () => number): Conditions {
-  return Object.fromEntries(
-    CONDITION_FIELDS.map((field) => [field.key, pickRandom(rng, field.options)])
-  ) as Conditions;
+  return Array.from(slots).sort((a, b) => a - b);
 }
 
 function generateReportsForBreak(breakId: string, seed: number): ConditionReport[] {
   const rng = mulberry32(seed);
   const reporters = BREAK_REPORTERS[breakId] ?? [];
   const reports: ConditionReport[] = [];
+  let reporterIndex = 0;
 
   for (const timestamp of buildTimeSlots(rng)) {
-    // A few votes per time slot — each metric gets its own random value per vote.
-    const voteCount = randomInt(rng, 3, 6);
-    for (let i = 0; i < voteCount; i++) {
-      const reporter = reporters[i % reporters.length];
-      reports.push({
-        reportedAt: new Date(timestamp).toISOString(),
-        reporterId: reporter.id,
-        reporterName: reporter.name,
-        conditions: randomConditions(rng),
-      });
+    // A few votes per variable per time slot — each chart reads only its metric.
+    for (const field of CONDITION_FIELDS) {
+      const voteCount = randomInt(rng, 2, 5);
+      for (let i = 0; i < voteCount; i++) {
+        const reporter = reporters[reporterIndex++ % reporters.length];
+        reports.push({
+          reportedAt: new Date(timestamp).toISOString(),
+          reporterId: reporter.id,
+          reporterName: reporter.name,
+          conditions: {
+            ...DEFAULT_CONDITIONS,
+            [field.key]: pickRandom(rng, field.options),
+          },
+        });
+      }
     }
   }
 
@@ -142,12 +153,6 @@ export function getReportsForBreak(
   return all
     .filter((r) => now - new Date(r.reportedAt).getTime() <= cutoff)
     .sort((a, b) => new Date(a.reportedAt).getTime() - new Date(b.reportedAt).getTime());
-}
-
-function getStartOfLocalDay(timestamp: number): number {
-  const d = new Date(timestamp);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
 }
 
 function floorToLocalHour(timestamp: number): number {

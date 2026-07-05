@@ -32,6 +32,13 @@ type BarPoint = {
   timestamp: number;
 };
 
+type TimeSlot = {
+  timestamp: number;
+  x: number;
+  width: number;
+  entries: { value: string; count: number; color: string }[];
+};
+
 function formatXLabel(date: Date, horizon: TimeHorizon): string {
   if (horizon === "today") {
     const h = date.getHours();
@@ -74,7 +81,7 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const plotRef = useRef<SVGSVGElement>(null);
-  const [hover, setHover] = useState<BarPoint | null>(null);
+  const [hover, setHover] = useState<TimeSlot | null>(null);
 
   const plotH = CHART_H - PADDING.top - PADDING.bottom;
   const plotBottom = PADDING.top + plotH;
@@ -82,7 +89,7 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
   const slotWidth = horizon === "today" ? TODAY_SLOT_WIDTH : SLOT_WIDTH;
   const slotGap = horizon === "today" ? TODAY_SLOT_GAP : SLOT_GAP;
 
-  const { timestamps, plotWidth, allBars, maxCount } = useMemo(() => {
+  const { timestamps, plotWidth, allBars, maxCount, timeSlots } = useMemo(() => {
     const slots = getMetricCountsByTimestamp(allReports, metric, horizon);
 
     const maxCount = Math.max(1, ...slots.map((s) => Math.max(...Array.from(s.counts.values()))));
@@ -92,7 +99,7 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
     const groupGap = 4;
     const bars: BarPoint[] = [];
 
-    slots.forEach((slot, slotIndex) => {
+    const timeSlots: TimeSlot[] = slots.map((slot, slotIndex) => {
       const slotLeft = slotIndex * (slotWidth + slotGap);
       const barWidth = (slotWidth - barGap * (optionCount - 1) - groupGap) / optionCount;
 
@@ -115,6 +122,17 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
           timestamp: slot.timestamp,
         });
       });
+
+      return {
+        timestamp: slot.timestamp,
+        x: slotLeft,
+        width: slotWidth,
+        entries: options.map((value) => ({
+          value,
+          count: slot.counts.get(value) ?? 0,
+          color: getOptionColor(metric, value),
+        })),
+      };
     });
 
     return {
@@ -122,6 +140,7 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
       plotWidth: slots.length * (slotWidth + slotGap) - slotGap + PADDING.right,
       allBars: bars,
       maxCount,
+      timeSlots,
     };
   }, [allReports, metric, horizon, options, plotH, plotBottom, slotWidth, slotGap]);
 
@@ -153,50 +172,47 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
   }, [maxCount, plotBottom, plotH]);
 
   const TOOLTIP_W = 180;
-  const TOOLTIP_H = 52;
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
-      if (!plotRef.current || !scrollRef.current) return;
+      if (!plotRef.current) return;
       const rect = plotRef.current.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left + scrollRef.current.scrollLeft;
+      const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
-      let nearest: BarPoint | null = null;
-      let nearestDist = Infinity;
-
-      for (const bar of allBars) {
-        if (
-          mouseX >= bar.x &&
-          mouseX <= bar.x + bar.width &&
-          mouseY >= bar.y &&
-          mouseY <= plotBottom
-        ) {
-          const cx = bar.x + bar.width / 2;
-          const cy = bar.y + bar.height / 2;
-          const dist = Math.hypot(mouseX - cx, mouseY - cy);
-          if (dist < nearestDist) {
-            nearestDist = dist;
-            nearest = bar;
-          }
-        }
+      if (mouseY < PADDING.top || mouseY > plotBottom) {
+        setHover(null);
+        return;
       }
 
-      setHover(nearest);
+      const slotSpan = slotWidth + slotGap;
+      const slotIndex = Math.floor(mouseX / slotSpan);
+      const slotLeft = slotIndex * slotSpan;
+
+      if (
+        slotIndex < 0 ||
+        slotIndex >= timeSlots.length ||
+        mouseX < slotLeft ||
+        mouseX > slotLeft + slotWidth
+      ) {
+        setHover(null);
+        return;
+      }
+
+      setHover(timeSlots[slotIndex]);
     },
-    [allBars, plotBottom]
+    [timeSlots, plotBottom, slotWidth, slotGap]
   );
 
+  const hoverEntries = hover ? hover.entries.filter((e) => e.count > 0) : [];
+  const tooltipH = hover ? 36 + Math.max(hoverEntries.length, 1) * 20 : 0;
   const tooltipX = hover
     ? hover.x + hover.width / 2 + TOOLTIP_W + 8 > plotWidth
       ? hover.x - TOOLTIP_W - 8
       : hover.x + hover.width / 2 + 8
     : 0;
   const tooltipY = hover
-    ? Math.max(
-        PADDING.top,
-        Math.min(hover.y - TOOLTIP_H / 2, CHART_H - PADDING.bottom - TOOLTIP_H)
-      )
+    ? Math.max(PADDING.top, Math.min(PADDING.top + 8, CHART_H - PADDING.bottom - tooltipH))
     : 0;
 
   if (allReports.length === 0 && horizon !== "today") {
@@ -325,7 +341,7 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
                 height={bar.height}
                 fill={bar.color}
                 rx={1}
-                opacity={hover && hover !== bar ? 0.45 : 1}
+                opacity={hover && hover.timestamp !== bar.timestamp ? 0.45 : 1}
               />
             ))}
 
@@ -334,19 +350,20 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
               <>
                 <rect
                   x={hover.x}
-                  y={hover.y}
+                  y={PADDING.top}
                   width={hover.width}
-                  height={hover.height}
-                  fill="none"
+                  height={plotH}
+                  fill="var(--color-text)"
+                  fillOpacity={0.04}
                   stroke="var(--color-text)"
-                  strokeWidth={1.5}
-                  rx={1}
+                  strokeWidth={1}
+                  rx={2}
                 />
                 <foreignObject
                   x={tooltipX}
                   y={tooltipY}
                   width={TOOLTIP_W}
-                  height={TOOLTIP_H}
+                  height={tooltipH}
                 >
                   <div
                     style={{
@@ -369,16 +386,31 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
                     >
                       {formatTooltipTime(new Date(hover.timestamp), horizon)}
                     </p>
-                    <p
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: hover.color,
-                        margin: "2px 0 0",
-                      }}
-                    >
-                      {hover.value} · {hover.count} {hover.count === 1 ? "vote" : "votes"}
-                    </p>
+                    {hoverEntries.length === 0 ? (
+                      <p
+                        style={{
+                          fontSize: 12,
+                          color: "var(--color-text-muted)",
+                          margin: "4px 0 0",
+                        }}
+                      >
+                        No votes
+                      </p>
+                    ) : (
+                      hoverEntries.map(({ value, count, color }) => (
+                        <p
+                          key={value}
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color,
+                            margin: "4px 0 0",
+                          }}
+                        >
+                          {value} · {count} {count === 1 ? "vote" : "votes"}
+                        </p>
+                      ))
+                    )}
                   </div>
                 </foreignObject>
               </>

@@ -78,7 +78,7 @@ export default function FavoriteBreaksTable() {
                     className="px-4 py-2.5 text-[11px] font-medium tracking-wide uppercase w-[190px]"
                     style={{ color: "var(--color-text-muted)" }}
                   >
-                    Report frequency (24 hrs)
+                    # reports today
                   </th>
                   <th
                     scope="col"
@@ -101,7 +101,7 @@ export default function FavoriteBreaksTable() {
                   {conditionsVisible && (
                     <th
                       scope="col"
-                      className="px-4 py-2.5 text-[11px] font-medium tracking-wide uppercase w-[120px]"
+                      className="px-4 py-2.5 text-[11px] font-medium tracking-wide uppercase w-[130px]"
                       style={{ color: "var(--color-text-muted)" }}
                     />
                   )}
@@ -121,7 +121,7 @@ export default function FavoriteBreaksTable() {
                   </tr>
                 ) : (
                   breaks.map((item, index) => {
-                    const summary = conditionsVisible ? getBreakSummary(item.id) : null;
+                    const summary = getBreakSummary(item.id);
                     return (
                       <tr
                         key={item.id}
@@ -153,7 +153,7 @@ export default function FavoriteBreaksTable() {
                             className="text-[13px] tabular-nums"
                             style={{ color: "var(--color-text-muted)" }}
                           >
-                            {summary?.reportFrequency ?? "—"}
+                            {summary.reportFrequency}
                           </span>
                         </td>
                         <td className="px-4 py-3">
@@ -161,10 +161,10 @@ export default function FavoriteBreaksTable() {
                             className="text-[13px] tabular-nums"
                             style={{ color: "var(--color-text-muted)" }}
                           >
-                            {summary?.latestReport ?? "—"}
+                            {summary.latestReport}
                           </span>
                         </td>
-                        {conditionsVisible && summary && (
+                        {conditionsVisible && (
                           <>
                             {CONDITION_FIELDS.map((field) => {
                               const value = summary.conditions[field.key];
@@ -187,7 +187,7 @@ export default function FavoriteBreaksTable() {
                             <td className="px-4 py-3 text-right">
                               <Link
                                 href={`/favorite-breaks/${item.id}`}
-                                className="inline-flex items-center rounded border px-3 py-1 text-[12px] font-medium transition-colors"
+                                className="inline-flex shrink-0 items-center whitespace-nowrap rounded border px-3 py-1 text-[12px] font-medium transition-colors"
                                 style={{
                                   borderColor: "var(--color-border)",
                                   color: "var(--color-text-muted)",
