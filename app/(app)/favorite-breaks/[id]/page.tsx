@@ -1,6 +1,4 @@
-import { notFound } from "next/navigation";
-import { getFavoriteBreakById } from "@/lib/breaks";
-import BreakDetailView from "@/components/BreakDetailView";
+import BreakDetailClient from "@/components/BreakDetailClient";
 
 export default async function BreakDetailPage({
   params,
@@ -8,11 +6,5 @@ export default async function BreakDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const breakData = getFavoriteBreakById(id);
-
-  if (!breakData) {
-    notFound();
-  }
-
-  return <BreakDetailView breakData={breakData} />;
+  return <BreakDetailClient id={id} />;
 }

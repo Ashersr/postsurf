@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { FAVORITE_BREAKS } from "@/lib/breaks";
+import { useFavoriteBreaks } from "./FavoriteBreaksProvider";
 
 type BreakSearchFieldProps = {
   value: string;
@@ -12,17 +12,18 @@ export default function BreakSearchField({
   value,
   onChange,
 }: BreakSearchFieldProps) {
+  const { favoriteBreaks } = useFavoriteBreaks();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const filteredBreaks = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return FAVORITE_BREAKS;
-    return FAVORITE_BREAKS.filter((item) =>
+    if (!normalizedQuery) return favoriteBreaks;
+    return favoriteBreaks.filter((item) =>
       item.name.toLowerCase().includes(normalizedQuery)
     );
-  }, [query]);
+  }, [favoriteBreaks, query]);
 
   const handleSelect = (breakId: string, name: string) => {
     onChange(breakId);
@@ -34,7 +35,7 @@ export default function BreakSearchField({
     if (containerRef.current?.contains(e.relatedTarget as Node)) return;
     setIsOpen(false);
     if (value) {
-      const match = FAVORITE_BREAKS.find((item) => item.id === value);
+      const match = favoriteBreaks.find((item) => item.id === value);
       setQuery(match?.name ?? "");
     } else {
       setQuery("");
@@ -51,7 +52,7 @@ export default function BreakSearchField({
           setQuery(nextQuery);
           setIsOpen(true);
           if (value) {
-            const selected = FAVORITE_BREAKS.find((item) => item.id === value);
+            const selected = favoriteBreaks.find((item) => item.id === value);
             if (selected?.name !== nextQuery) onChange("");
           }
         }}

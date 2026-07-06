@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/navItems";
+import UserSettingsButton from "./UserSettingsButton";
 
 export default function SidebarNav() {
   const pathname = usePathname();
@@ -96,6 +97,10 @@ export default function SidebarNav() {
           })}
         </ul>
       </nav>
+
+      <div className="px-3 py-5 mt-auto">
+        <UserSettingsButton />
+      </div>
     </aside>
   );
 }

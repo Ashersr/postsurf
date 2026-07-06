@@ -11,7 +11,6 @@ const TIME_HORIZONS: { key: TimeHorizon; label: string }[] = [
   { key: "today", label: "Today" },
   { key: "1w", label: "1W" },
   { key: "1m", label: "1M" },
-  { key: "all", label: "All" },
 ];
 
 export default function BreakDetailView({
@@ -20,7 +19,7 @@ export default function BreakDetailView({
   breakData: FavoriteBreak;
 }) {
   const [horizon, setHorizon] = useState<TimeHorizon>("today");
-  const [metric, setMetric] = useState<ConditionKey>("waveHeight");
+  const [metric, setMetric] = useState<ConditionKey>("suggestion");
 
   const summary = getBreakSummary(breakData.id);
   const reports = getReportsForBreak(breakData.id, horizon);
@@ -64,34 +63,25 @@ export default function BreakDetailView({
         >
           {breakData.name}
         </h1>
-      </div>
-
-      {/* Metadata */}
-      <div
-        className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 rounded-lg border px-4 py-2.5 mb-8 text-[13px]"
-        style={{
-          backgroundColor: "var(--color-bg)",
-          borderColor: "var(--color-border)",
-          boxShadow: "var(--shadow-sm)",
-        }}
-      >
-        <span style={{ color: "var(--color-text-muted)" }}>
-          <span className="font-medium" style={{ color: "var(--color-text)" }}>
-            {summary.reportFrequency}
-          </span>{" "}
-          reports in the last 24 hrs
-        </span>
-        <span
-          className="hidden sm:block w-px h-4 shrink-0"
-          style={{ backgroundColor: "var(--color-border)" }}
-          aria-hidden
-        />
-        <span style={{ color: "var(--color-text-muted)" }}>
-          Latest:{" "}
-          <span className="font-medium tabular-nums" style={{ color: "var(--color-text)" }}>
-            {summary.latestReport}
+        <div className="mt-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3 text-[13px]">
+          <span style={{ color: "var(--color-text-muted)" }}>
+            <span className="font-medium" style={{ color: "var(--color-text)" }}>
+              {summary.reportFrequency}
+            </span>{" "}
+            reports in the last 24 hrs
           </span>
-        </span>
+          <span
+            className="hidden sm:block w-px h-3.5 shrink-0"
+            style={{ backgroundColor: "var(--color-border)" }}
+            aria-hidden
+          />
+          <span style={{ color: "var(--color-text-muted)" }}>
+            Latest:{" "}
+            <span className="font-medium tabular-nums" style={{ color: "var(--color-text)" }}>
+              {summary.latestReport}
+            </span>
+          </span>
+        </div>
       </div>
 
       {/* Headline facts — each derived from vote history */}

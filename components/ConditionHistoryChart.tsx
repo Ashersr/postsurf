@@ -82,6 +82,7 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
   const scrollRef = useRef<HTMLDivElement>(null);
   const plotRef = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState<TimeSlot | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const plotH = CHART_H - PADDING.top - PADDING.bottom;
   const plotBottom = PADDING.top + plotH;
@@ -159,6 +160,23 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
     }
   }, [breakId, horizon, metric, plotWidth, slotWidth, slotGap]);
 
+  // Suppress chart hover/highlight styling while a modal is open.
+  useEffect(() => {
+    const syncModalState = () => {
+      const open = document.querySelectorAll('[role="dialog"][aria-modal="true"]').length > 0;
+      setIsModalOpen(open);
+      if (open) {
+        setHover(null);
+      }
+    };
+
+    syncModalState();
+
+    const observer = new MutationObserver(syncModalState);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
   // Y-axis: integer ticks from 0 to maxCount
   const yTicks = useMemo(() => {
     const ticks: { y: number; label: string }[] = [];
@@ -175,7 +193,7 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
-      if (!plotRef.current) return;
+      if (!plotRef.current || isModalOpen) return;
       const rect = plotRef.current.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
@@ -201,7 +219,7 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
 
       setHover(timeSlots[slotIndex]);
     },
-    [timeSlots, plotBottom, slotWidth, slotGap]
+    [timeSlots, plotBottom, slotWidth, slotGap, isModalOpen]
   );
 
   const hoverEntries = hover ? hover.entries.filter((e) => e.count > 0) : [];
@@ -229,7 +247,12 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
   }
 
   return (
-    <div style={{ backgroundColor: "var(--color-surface)", width: "100%" }}>
+    <div
+      style={{
+        backgroundColor: isModalOpen ? "transparent" : "var(--color-surface)",
+        width: "100%",
+      }}
+    >
       <div
         ref={scrollRef}
         className="overflow-x-auto"
@@ -241,29 +264,33 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
             className="sticky left-0 z-10 shrink-0"
             style={{
               width: Y_LABEL_W,
-              backgroundColor: "var(--color-surface)",
-              boxShadow: "4px 0 8px -4px rgba(6, 27, 49, 0.08)",
+              backgroundColor: isModalOpen ? "transparent" : "var(--color-surface)",
+              boxShadow: isModalOpen ? "none" : "4px 0 8px -4px rgba(6, 27, 49, 0.08)",
             }}
           >
             <svg width={Y_LABEL_W} height={CHART_H}>
-              <line
-                x1={Y_LABEL_W - 1}
-                y1={PADDING.top}
-                x2={Y_LABEL_W - 1}
-                y2={plotBottom}
-                stroke="var(--color-border)"
-                strokeWidth={1}
-              />
+              {!isModalOpen && (
+                <line
+                  x1={Y_LABEL_W - 1}
+                  y1={PADDING.top}
+                  x2={Y_LABEL_W - 1}
+                  y2={plotBottom}
+                  stroke="var(--color-border)"
+                  strokeWidth={1}
+                />
+              )}
               {yTicks.map(({ y, label }) => (
                 <g key={label}>
-                  <line
-                    x1={Y_LABEL_W - 5}
-                    y1={y}
-                    x2={Y_LABEL_W - 1}
-                    y2={y}
-                    stroke="var(--color-border)"
-                    strokeWidth={1}
-                  />
+                  {!isModalOpen && (
+                    <line
+                      x1={Y_LABEL_W - 5}
+                      y1={y}
+                      x2={Y_LABEL_W - 1}
+                      y2={y}
+                      stroke="var(--color-border)"
+                      strokeWidth={1}
+                    />
+                  )}
                   <text
                     x={Y_LABEL_W - 9}
                     y={y}
@@ -287,7 +314,12 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
             height={CHART_H}
             onMouseMove={handleMouseMove}
             onMouseLeave={() => setHover(null)}
-            style={{ display: "block", cursor: "crosshair", flexShrink: 0 }}
+            style={{
+              display: "block",
+              cursor: isModalOpen ? "default" : "crosshair",
+              flexShrink: 0,
+              pointerEvents: isModalOpen ? "none" : "auto",
+            }}
           >
             {/* Horizontal grid lines */}
             {yTicks.map(({ y, label }) => (
@@ -341,12 +373,12 @@ export default function ConditionHistoryChart({ breakId, horizon, metric }: Prop
                 height={bar.height}
                 fill={bar.color}
                 rx={1}
-                opacity={hover && hover.timestamp !== bar.timestamp ? 0.45 : 1}
+                opacity={hover && !isModalOpen && hover.timestamp !== bar.timestamp ? 0.45 : 1}
               />
             ))}
 
             {/* Hover highlight + tooltip */}
-            {hover && (
+            {hover && !isModalOpen && (
               <>
                 <rect
                   x={hover.x}

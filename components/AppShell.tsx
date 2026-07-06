@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CreditsProvider } from "./CreditsProvider";
+import { FavoriteBreaksProvider } from "./FavoriteBreaksProvider";
 import TopBar from "./TopBar";
 import WelcomeOverlay from "./WelcomeOverlay";
 
@@ -10,11 +11,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <CreditsProvider>
-      <TopBar />
-      {children}
-      {showWelcome && (
-        <WelcomeOverlay onDismiss={() => setShowWelcome(false)} />
-      )}
+      <FavoriteBreaksProvider>
+        <TopBar />
+        {children}
+        {showWelcome && (
+          <WelcomeOverlay onDismiss={() => setShowWelcome(false)} />
+        )}
+      </FavoriteBreaksProvider>
     </CreditsProvider>
   );
 }

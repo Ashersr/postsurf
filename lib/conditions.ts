@@ -45,11 +45,11 @@ export const SUGGESTION_OPTIONS: Suggestion[] = [
 ];
 
 export const CONDITION_FIELDS = [
+  { key: "suggestion", label: "Suggestion", options: SUGGESTION_OPTIONS },
   { key: "waveHeight", label: "Wave height", options: WAVE_HEIGHT_OPTIONS },
   { key: "surfCrowd", label: "Surf crowd", options: CROWD_OPTIONS },
   { key: "parking", label: "Parking", options: CROWD_OPTIONS },
   { key: "temperature", label: "Temperature", options: TEMPERATURE_OPTIONS },
-  { key: "suggestion", label: "Suggestion", options: SUGGESTION_OPTIONS },
 ] as const;
 
 export const DEFAULT_CONDITIONS: Conditions = {
