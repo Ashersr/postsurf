@@ -28,17 +28,17 @@ const REF = REFERENCE_NOW;
 type Reporter = { id: string; name: string };
 
 const BREAK_REPORTERS: Record<string, Reporter[]> = {
-  "1": [
+  "43": [
     { id: "alex", name: "Alex" },
     { id: "jamie", name: "Jamie" },
     { id: "sam", name: "Sam" },
   ],
-  "2": [
+  "35": [
     { id: "riley", name: "Riley" },
     { id: "casey", name: "Casey" },
     { id: "morgan", name: "Morgan" },
   ],
-  "3": [
+  "44": [
     { id: "alex", name: "Alex" },
     { id: "sam", name: "Sam" },
     { id: "riley", name: "Riley" },
@@ -120,9 +120,9 @@ function generateReportsForBreak(breakId: string, seed: number): ConditionReport
 }
 
 const REPORTS_BY_BREAK: Record<string, ConditionReport[]> = {
-  "1": generateReportsForBreak("1", 0x0b34c7),
-  "2": generateReportsForBreak("2", 0x7a91f2),
-  "3": generateReportsForBreak("3", 0x3e5d18),
+  "43": generateReportsForBreak("43", 0x0b34c7),
+  "35": generateReportsForBreak("35", 0x7a91f2),
+  "44": generateReportsForBreak("44", 0x3e5d18),
 };
 
 export function getReportsForBreak(
